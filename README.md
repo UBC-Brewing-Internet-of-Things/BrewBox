@@ -1,3 +1,8 @@
+# CAD File
+https://cad.onshape.com/documents/e40f8e0f75d91ad27d675d97/w/4e5861d644b90c2854acc322/e/03d6b4b9c6db50a2848863a4
+
+
+
 # Whitebox Interactive Console for EZO
 An interactive console (REPL) on Arduino for Atlas Scientific EZO devices. Use the Arduino IDE Serial Monitor (or any other Serial Console) to setup your Atlas Scientific EZO devices. 
 
