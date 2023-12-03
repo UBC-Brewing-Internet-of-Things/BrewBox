@@ -35,6 +35,15 @@ errors i2c_error;                       // error-byte to store result of Wire.tr
 states state;
 unsigned long next_receive_time;
 
+struct EzoDeviceInfo {
+  int address;
+  String type;
+  char* version;
+};
+
+const int MAX_EZO_DEVICES = 5;
+EzoDeviceInfo activeEzoDevices[MAX_EZO_DEVICES];
+int numActiveEzoDevices = 0;
 
 void setup() {
 
@@ -69,7 +78,7 @@ void loop() {
 
     case POLLING_READ_STATE:
 
-      polling_read();
+      polling_read_all();
       break;
   }
 }
@@ -234,17 +243,47 @@ void polling_read() {
   }
 }
 
+void polling_read_all() {
+  if (millis() > next_receive_time) {
+    // Iterate through all active EZO devices and perform polling read for each
+    for (int i = 0; i < numActiveEzoDevices; i++) {
+      ezo_receive_command();
+      ezo_address = activeEzoDevices[i].address;
+      ezo_send_command("r");
+      next_receive_time = millis() + 1000;
+
+      // Read and print the response for each device
+      if (i2c_error == 0) {
+        Serial.print(ezo_address);
+        Serial.print(F("> "));
+        Serial.println(ezo_answer);
+      }
+
+      // Check if there is any input from the serial console to exit polling
+      if (Serial.available() > 0) {
+        state = REPL_READ_STATE;
+         // exit the function if there's input to avoid unnecessary iterations
+        Serial.print("exit poll");
+      }
+    }
+  }
+}
 
 //function controls which UART/I2C port is opened. returns true if channel could be changed.
 boolean set_active_ezo(int _new_active_address) {
-  ezo_address = _new_active_address;
-  ezo_send_command("I");
-  delay(400);
-  ezo_receive_command();
+  if (numActiveEzoDevices < MAX_EZO_DEVICES) {
+    ezo_address = _new_active_address;
+    ezo_send_command("I");
+    delay(400);
+    ezo_receive_command();
 
-  if (parseInfo()) {
-
-    return true;
+    if (parseInfo()) {
+      activeEzoDevices[numActiveEzoDevices].address = ezo_address;
+      activeEzoDevices[numActiveEzoDevices].type = ezo_type;
+      activeEzoDevices[numActiveEzoDevices].version = ezo_version;
+      numActiveEzoDevices++;
+      return true;
+    }
   }
   return false;
 }
