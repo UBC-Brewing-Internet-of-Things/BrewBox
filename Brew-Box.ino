@@ -41,9 +41,19 @@ struct EzoDeviceInfo {
   char* version;
 };
 
+struct DataPacket {
+  char* value;
+  int time;
+  String type;
+};
+
 const int MAX_EZO_DEVICES = 5;
 EzoDeviceInfo activeEzoDevices[MAX_EZO_DEVICES];
 int numActiveEzoDevices = 0;
+
+const int PACKET_SIZE = 20;
+int data_index = 0;
+DataPacket data[PACKET_SIZE];
 
 void setup() {
 
@@ -79,8 +89,23 @@ void loop() {
     case POLLING_READ_STATE:
 
       polling_read_all();
+      if (data_index == PACKET_SIZE){
+        send_data(data);
+        data_index = 0;
+      };
+
       break;
   }
+}
+
+void send_data(DataPacket* data){
+  Serial.print(data_index);
+  for(int i=0; i< data_index; i++){
+    Serial.println(data[i].type);
+    Serial.println(data[i].value);
+    Serial.println(data[i].time);
+  }
+  return;
 }
 
 
@@ -244,19 +269,29 @@ void polling_read() {
 }
 
 void polling_read_all() {
-  if (millis() > next_receive_time) {
+
+  for (int i = 0; i < numActiveEzoDevices; i++){
+    if (millis() > next_receive_time) {
     // Iterate through all active EZO devices and perform polling read for each
-    for (int i = 0; i < numActiveEzoDevices; i++) {
+    
       ezo_receive_command();
       ezo_address = activeEzoDevices[i].address;
+      ezo_type = activeEzoDevices[i].type;
+
       ezo_send_command("r");
       next_receive_time = millis() + 1000;
 
       // Read and print the response for each device
       if (i2c_error == 0) {
-        Serial.print(ezo_address);
+        Serial.print(ezo_type);
         Serial.print(F("> "));
         Serial.println(ezo_answer);
+        data[data_index].time = next_receive_time - 1000;
+        data[data_index].value = ezo_answer;
+        data[data_index].type = ezo_type;
+        data_index++;
+      } else{
+        Serial.println("i2c_error:()");
       }
 
       // Check if there is any input from the serial console to exit polling
