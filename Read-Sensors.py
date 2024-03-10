@@ -1,0 +1,69 @@
+import serial
+import pandas as pd
+
+# Open the serial port
+ser = serial.Serial('COM4', 9600)  # Replace 'COM4' with your Arduino's serial port
+
+
+#create a csv file to store the data if it doesn't exist
+
+
+# load the csv file or create a new one as pandas df
+df = pd.read_csv('data.csv')
+print(df)
+# Create a CSV file to store the data
+
+
+
+READ_PACKET = False
+SEND_MESSAGE = True
+
+# Read and write data
+while True:
+    # Read data from Arduino
+    data = ser.readline().decode().strip()  # Decode the received bytes and remove any leading/trailing whitespace
+    
+    if data == "Packet End":
+        READ_PACKET = False
+        #write the data to the csv file
+        df.to_csv('data.csv', index=False)
+
+
+    if READ_PACKET:
+        #data: Disolved O2,time,Temperature,time,PH,time
+
+        #if data contains Oxygen, next data is value, next data is time
+        if "Oxygen" in data:
+            df["OXYGEN_VAL"].append(data.split(',')[1])
+            df["OXYGEN_TIME"].append(data.split(',')[2])
+            
+        #if data contains RTD
+        if "RTD" in data:
+            df["TEMP_VAL"].append(data.split(',')[1])
+            df["TEMP_TIME"].append(data.split(',')[2])
+
+        #if data contains pH
+        if "pH" in data:
+            df["PH_VAL"].append(data.split(',')[1])
+            df["PH_TIME"].append(data.split(',')[2])
+
+        # Print the received data
+        print(data)
+
+    if data == "Packet Start":
+        READ_PACKET = True
+
+    print(data)
+
+    if data == "Send Command":
+        # Send data to Arduino from Keyboard
+        ser.write(input().encode())
+        ser.write(b'\n') #send new line to indicate end of command
+
+
+
+
+# Close the serial port and CSV file
+
+ser.close()
+csv_file.close()

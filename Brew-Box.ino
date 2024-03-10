@@ -16,6 +16,13 @@
 
 #include <Wire.h>                        //enable I2C.
 #include <errno.h>
+#include <WiFi.h>
+
+const char* ssid = "your_SSID";
+const char* password = "your_PASSWORD";
+const char* serverIP = "your_RaspberryPi_IP";
+int serverPort = 1234; // Replace with the actual port number
+WiFiClient client;
 
 enum errors {SUCCESS, FAIL, NOT_READY, NO_DATA };
 enum states {REPL_READ_STATE, REPL_EVAL_STATE, REPL_PRINT_STATE, POLLING_READ_STATE};
@@ -62,7 +69,7 @@ void setup() {
   Wire.begin();                          // enable I2C port.
 
   ezo_type.reserve(40);                  // reserve string buffer to save some SRAM
-
+  // set_up_wifi();                     // set up wifi connection
   intro();                               // display startup message
   state = REPL_READ_STATE;
 }
@@ -96,18 +103,55 @@ void loop() {
 
       break;
   }
+
+  // on quit, close the connection
+  // if (Serial.available() > 0) {
+  //   close_connection();
+  // }
+}
+
+void set_up_wifi() {
+  // Connect to WiFi network
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(10000);
+    Serial.println("Connecting to WiFi...");
+  }
+
+  Serial.println("Connected to WiFi");
+  Serial.println(WiFi.localIP());
+  // Connect to server
+  if (!client.connect(serverIP, serverPort)) {
+    Serial.println("Failed to connect to server");
+    return;
+  }
+  Serial.println("Connected to server");
 }
 
 void send_data(DataPacket* data){
-  Serial.print(data_index);
-  for(int i=0; i< data_index; i++){
-    Serial.println(data[i].type);
-    Serial.println(data[i].value);
-    Serial.println(data[i].time);
+  Serial.println("Packet Start");
+  // Send data over TCP connection
+  for (int i = 0; i < data_index; i++) {
+    // client.print(data[i].type);
+    // client.print(",");
+    // client.print(data[i].value);
+    // client.print(",");
+    // client.println(data[i].time);
+    Serial.print(data[i].type);
+    Serial.print(",");
+    Serial.print(data[i].value);
+    Serial.print(",");
+    Serial.print(data[i].time);
+    Serial.print("\n")
   }
-  return;
+  Serial.println("Packet End");  
 }
 
+void close_connection() {
+  // Close TCP connection
+  client.stop();
+  Serial.println("Connection closed");
+}
 
 // loop REPL_READ_STATE
 void read_console() {
@@ -446,6 +490,7 @@ void intro() {
   }
   Serial.println( F("For info type '!help'"));
   Serial.println( F("\n"));
+  Serial.println(F("Send Command"))
 }
 
 
