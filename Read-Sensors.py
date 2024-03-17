@@ -25,30 +25,26 @@ while True:
     
     if data == "Packet End":
         READ_PACKET = False
-        #write the data to the csv file
+        # Write the data to the csv file
         df.to_csv('data.csv', index=False)
 
-
     if READ_PACKET:
-        #data: Disolved O2,time,Temperature,time,PH,time
+        # Data: Disolved O2,time,Temperature,time,PH,time
 
-        #if data contains Oxygen, next data is value, next data is time
+        # If data contains Oxygen, next data is value, next data is time
         if "Oxygen" in data:
-            df["OXYGEN_VAL"].append(data.split(',')[1])
-            df["OXYGEN_TIME"].append(data.split(',')[2])
-            
-        #if data contains RTD
-        if "RTD" in data:
-            df["TEMP_VAL"].append(data.split(',')[1])
-            df["TEMP_TIME"].append(data.split(',')[2])
+            df.loc[len(df)] = [data.split(',')[1], data.split(',')[2], None, None, None, None]
 
-        #if data contains pH
+        # If data contains RTD
+        if "RTD" in data:
+            df.loc[len(df)] = [None, None, data.split(',')[1], data.split(',')[2], None, None]
+
+        # If data contains pH
         if "pH" in data:
-            df["PH_VAL"].append(data.split(',')[1])
-            df["PH_TIME"].append(data.split(',')[2])
+            df.loc[len(df)] = [None, None, None, None, data.split(',')[1], data.split(',')[2]]
 
         # Print the received data
-        print(data)
+        print(df)
 
     if data == "Packet Start":
         READ_PACKET = True
