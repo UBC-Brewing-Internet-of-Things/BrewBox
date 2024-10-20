@@ -6,8 +6,11 @@
 #include <Ezo_i2c.h>                    //include the EZO I2C library from https://github.com/Atlas-Scientific/Ezo_I2c_lib
 #include <Wire.h>
 
-Ezo_board ph = Ezo_board(99, "PH");     //create a PH circuit object, who's address is 99 and name is "PH"
-Ezo_board temperature = Ezo_board(102, "TEMP"); //create an RTD Temperature circuit object who's address is 102 and name is "TEMP"
+#define RDT_ADDRESS 102
+#define PH_ADDRESS 0x1
+
+Ezo_board ph = Ezo_board(PH_ADDRESS, "PH");     //create a PH circuit object, who's address is 99 and name is "PH"
+Ezo_board temperature = Ezo_board(RDT_ADDRESS, "TEMP"); //create an RTD Temperature circuit object who's address is 102 and name is "TEMP"
 float temp;
 
 void setup() {
